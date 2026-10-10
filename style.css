@@ -1,0 +1,59 @@
+body {
+  font-family: "Inter Tight", Helvetica, sans-serif;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-image: url("images/cloudy.jpg");
+}
+
+body.clear-day   { background-image: url("images/clear-day.jpg")}
+body.clear-night { background-image: url("images/clear-night.jpg")}
+body.cloudy      { background-image: url("images/cloudy.jpg")} /* maybe one day ill add diff */
+body.fog         { background-image: url("images/cloudy.jpg")}
+body.rain        { background-image: url("images/cloudy.jpg")}
+body.snow        { background-image: url("images/cloudy.jpg")}
+body.storm       { background-image: url("images/storm.jpg")}
+
+body.clear-night .container img { filter: brightness(0.85); }
+body.storm .container img       { filter: brightness(0.85); }
+
+.container {
+  width: 540px;
+  height: 639px;
+  margin-left: -270px;
+  left: 50%;
+  position: fixed;
+  bottom: 0px;
+}
+
+.info {
+  position: absolute;
+  top: 1rem;
+  left: 1.5rem;
+  text-align: left;
+  margin: 0;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.temp {
+  font-size: 3.5rem;
+  font-weight: 400;
+  line-height: 0.85;
+}
+
+.unit {
+  font-size: 0.4em;
+  font-weight: 500;
+  vertical-align: top;
+  position: relative;
+  top: 0.1em;
+  margin-left: 0.15em;
+}
+
+#weather {
+  font-size: 0.75rem;
+  font-weight: 200;
+  margin-top: 0.25rem;
+}
