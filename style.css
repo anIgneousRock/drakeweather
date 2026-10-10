@@ -15,10 +15,10 @@ body.rain        { background-image: url("images/cloudy.jpg")}
 body.snow        { background-image: url("images/cloudy.jpg")}
 body.storm       { background-image: url("images/storm.jpg")}
 
-body.clear-night .container img { filter: brightness(0.85); }
-body.storm .container img       { filter: brightness(0.85); }
+body.clear-night .drake img { filter: brightness(0.85); }
+body.storm .drake img       { filter: brightness(0.85); }
 
-.container {
+.drake {
   width: 540px;
   height: 639px;
   margin-left: -270px;
