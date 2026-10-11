@@ -1,28 +1,13 @@
-const FALLBACK = { lat: 37.66, lon: -121.87 };
-/*sf */
-
-const CLASSES = ["clear-day", "clear-night", "cloudy", "fog", "rain", "snow", "storm"];
-
-function describe(code, isDay) {
-  if (code === 0) return ["Clear",         isDay ? "clear-day" : "clear-night"];
-  if (code <= 2)  return ["Partly cloudy", isDay ? "clear-day" : "clear-night"];
-  if (code === 3) return ["Cloudy",        "cloudy"];
-  if (code <= 48) return ["Fog",           "fog"];
-  if (code <= 57) return ["Drizzle",       "rain"];
-  if (code <= 67) return ["Rain",          "rain"];
-  if (code <= 77) return ["Snow",          "snow"];
-  if (code <= 82) return ["Showers",       "rain"];
-  if (code <= 86) return ["Snow showers",  "snow"];
-  return                 ["Thunderstorm",  "storm"];
+function readJSON(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
+}
+function saveJSON(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
 }
 
-function render(current) {
-  const [label, cls] = describe(current.weather_code, current.is_day === 1);
-  document.body.classList.remove(...CLASSES);
-  document.body.classList.add(cls);
-  document.getElementById("weather").textContent = label;
-  document.getElementById("degreesFahrenheit").textContent = Math.round(current.temperature_2m);
-}
+["clear-day", "clear-night", "cloudy", "storm"].forEach(n => {
+  new Image().src = `images/${n}.jpg`;
+});
 
 async function load(lat, lon) {
   const url = "https://api.open-meteo.com/v1/forecast"
@@ -33,23 +18,30 @@ async function load(lat, lon) {
     const res = await fetch(url);
     const { current } = await res.json();
     render(current);
-    try { localStorage.setItem("wx", JSON.stringify(current)); } catch {}
+    saveJSON("wx", current);
   } catch {
-    document.getElementById("weather").textContent = "Weather unavailable";
+    if (!readJSON("wx")) {
+      document.getElementById("weather").textContent = "Weather unavailable";
+    }
   }
 }
 
-try {
-  const cached = localStorage.getItem("wx");
-  if (cached) render(JSON.parse(cached));
-} catch {}
+const cached = readJSON("wx");
+if (cached) render(cached);
+
+const loc = readJSON("loc") || FALLBACK;
+load(loc.lat, loc.lon);
 
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(
-    p => load(p.coords.latitude, p.coords.longitude),
-    () => load(FALLBACK.lat, FALLBACK.lon),
-    { timeout: 5000 }
+    p => {
+      const next = { lat: p.coords.latitude, lon: p.coords.longitude };
+      saveJSON("loc", next);
+      if (Math.abs(next.lat - loc.lat) > 0.05 || Math.abs(next.lon - loc.lon) > 0.05) {
+        load(next.lat, next.lon);
+      }
+    },
+    () => {},
+    { timeout: 5000, maximumAge: 3600000 }
   );
-} else {
-  load(FALLBACK.lat, FALLBACK.lon);
 }
