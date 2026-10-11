@@ -1,3 +1,29 @@
+const FALLBACK = { lat: 37.66, lon: -121.87 };
+/*sf*/
+
+const CLASSES = ["clear-day", "clear-night", "cloudy", "fog", "rain", "snow", "storm"];
+
+function describe(code, isDay) {
+  if (code === 0) return ["Clear",         isDay ? "clear-day" : "clear-night"];
+  if (code <= 2)  return ["Partly cloudy", isDay ? "clear-day" : "clear-night"];
+  if (code === 3) return ["Cloudy",        "cloudy"];
+  if (code <= 48) return ["Fog",           "fog"];
+  if (code <= 57) return ["Drizzle",       "rain"];
+  if (code <= 67) return ["Rain",          "rain"];
+  if (code <= 77) return ["Snow",          "snow"];
+  if (code <= 82) return ["Showers",       "rain"];
+  if (code <= 86) return ["Snow showers",  "snow"];
+  return                 ["Thunderstorm",  "storm"];
+}
+
+function render(current) {
+  const [label, cls] = describe(current.weather_code, current.is_day === 1);
+  document.body.classList.remove(...CLASSES);
+  document.body.classList.add(cls);
+  document.getElementById("weather").textContent = label;
+  document.getElementById("degreesFahrenheit").textContent = Math.round(current.temperature_2m);
+}
+
 function readJSON(key) {
   try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
 }
@@ -26,22 +52,41 @@ async function load(lat, lon) {
   }
 }
 
-const cached = readJSON("wx");
-if (cached) render(cached);
+function refresh() {
+  const l = readJSON("loc") || FALLBACK;
+  load(l.lat, l.lon);
+}
 
-const loc = readJSON("loc") || FALLBACK;
-load(loc.lat, loc.lon);
+function init() {
+  const cached = readJSON("wx");
+  if (cached) render(cached);
 
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(
-    p => {
-      const next = { lat: p.coords.latitude, lon: p.coords.longitude };
-      saveJSON("loc", next);
-      if (Math.abs(next.lat - loc.lat) > 0.05 || Math.abs(next.lon - loc.lon) > 0.05) {
-        load(next.lat, next.lon);
-      }
-    },
-    () => {},
-    { timeout: 5000, maximumAge: 3600000 }
-  );
+  const start = readJSON("loc") || FALLBACK;
+  load(start.lat, start.lon);
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      p => {
+        const next = { lat: p.coords.latitude, lon: p.coords.longitude };
+        saveJSON("loc", next);
+        if (Math.abs(next.lat - start.lat) > 0.05 || Math.abs(next.lon - start.lon) > 0.05) {
+          load(next.lat, next.lon);
+        }
+      },
+      () => {},
+      { timeout: 5000, maximumAge: 3600000 }
+    );
+  }
+
+  setInterval(refresh, 10 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refresh();
+  });
+}
+
+// Wait for <body> to exist, so it works with or without defer
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
 }
